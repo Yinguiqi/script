@@ -1,0 +1,84 @@
+// ==UserScript==
+// @name         Image Finder Danbooru
+// @namespace    http://tampermonkey.net/
+// @version      0.7
+// @description  Find and highlight images with a specific title on yande.re
+// @author       You
+// @match        https://danbooru.donmai.us/
+// @match        https://danbooru.donmai.us/posts?page=*
+// @match        https://danbooru.donmai.us/posts?tags=*
+// @grant        GM_setValue
+// @grant        GM_getValue
+// ==/UserScript==
+
+(function () {
+    'use strict';
+
+    function createButton(text, clickHandler) {
+        const button = document.createElement('button');
+        button.textContent = text;
+        button.style.position = 'fixed';
+        button.style.top = '10px';
+        button.style.right = '10px';
+        button.style.marginRight = '5px';
+        button.addEventListener('click', clickHandler);
+        document.body.appendChild(button);
+        return button;
+    }
+
+    function handleFindButtonClick() {
+        const searchText = prompt('Enter text to find images:', GM_getValue('searchText', ''));
+        if (searchText) {
+            GM_setValue('searchText', searchText);
+            findAndHighlightImages(searchText);
+        }
+    }
+
+
+    function handleImageClick(event) {
+        const img = event.target;
+        const src = img.getAttribute('src');
+        if (src) {
+            copyToClipboard(src);
+            alert('Title copied to clipboard: ' + src);
+        }
+    }
+
+    function copyToClipboard(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+    }
+
+    function findAndHighlightImages(searchText) {
+        const images = document.querySelectorAll('img');
+        images.forEach((img) => {
+            const src = img.getAttribute('src');
+            if (src && src.includes(searchText)) {
+                img.style.border = '5px solid red';
+            } else {
+                img.style.border = 'none';
+            }
+        });
+    }
+
+    function handleFindButtonClick1() {
+        const searchText = GM_getValue('searchText', '');
+        findAndHighlightImages(searchText);
+    }
+
+    createButton('Find Images', handleFindButtonClick);
+
+    const savedSearchText = GM_getValue('searchText', '');
+    if (savedSearchText && document.querySelector('[aria-label="Find Images"]')) {
+        findAndHighlightImages(savedSearchText);
+    }
+
+    // 添加以下代码，利用 window.onload 事件触发自动查找图片的操作
+    window.onload = function () {
+        handleFindButtonClick1();
+    };
+})();
